@@ -2652,12 +2652,30 @@ argument lisp string."
 (defloadvar  *objc-runtime-uses-tags*
   (>= #&kCFCoreFoundationVersionNumber 635.0d0))
 
+#+OBSOLETE
 (defun tagged-objc-instance-p (p)
   (when *objc-runtime-uses-tags*
     (let* ((tag (logand (the natural (%ptr-to-int p)) #xf)))
       (declare (fixnum tag))
       (if (logbitp 0 tag)
         tag))))
+
+; new version
+(defconstant _OBJC_TAG_EXT_INDEX_MASK #xFF)
+(defconstant _OBJC_TAG_EXT_INDEX_SHIFT 4)
+(defconstant OBJC_TAG_First52BitPayload  8)
+(defun tagged-objc-instance-p (p)
+  (when ccl::*objc-runtime-uses-tags*
+    (let* ((rawaddr (%ptr-to-int p))
+           (basic-tag (logand rawaddr #xf)))
+      (declare (ccl::natural rawaddr)
+               (fixnum basic-tag))
+      (when (logbitp 0 basic-tag) ; we know there is a tag. Now to determine what kind..
+        (if (= basic-tag #xF)
+            (let ((ext-tag (logand _OBJC_TAG_EXT_INDEX_MASK (ash rawaddr (- _OBJC_TAG_EXT_INDEX_SHIFT)))))
+              (declare (fixnum ext-tag))
+              (+ ext-tag OBJC_TAG_First52BitPayload))
+            basic-tag)))))
 
 (defun %objc-instance-class-index (p)
   (unless (%null-ptr-p p)
