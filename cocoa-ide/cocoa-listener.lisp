@@ -429,7 +429,7 @@
     (if (or (%null-ptr-p doc)
             (null (hemlock-document-process doc)) 
             (perform-close-kills-process-p doc))
-      (#/close w)
+      (cocoa-close w t)
       (progn
         (#/orderOut: w sender)
         ;(#/close w)
@@ -441,7 +441,7 @@
   "Maybe forcibly 'close' this window, with some definition of 'close' that's right for this window class.
   Return nil if we should let the system close it instead."
   (declare (ignore sender))
-  (#/close w)
+  (cocoa-close w t)
   nil ; tell system we already closed it
   )
 
