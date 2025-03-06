@@ -61,6 +61,7 @@
   (let ((view (hemlock-view unknown)))
     (when view (hi::hemlock-view-buffer view))))
 
+;; SVS change 07-Feb-2025 to try to stop CCL crashing after closing a window
 (defmacro with-hemlock-context ((ns-object) &body body)
   (let ((ns-obj (gensym)) (view (gensym)) (buffer (gensym)) (pane (gensym)))
     `(let* ((,ns-obj ,ns-object)
@@ -68,9 +69,13 @@
             (,buffer (hemlock-buffer ,ns-obj))
             (,pane (cond ((eq ,buffer (hi::hemlock-view-buffer ,view)) :text)
                          ((eq ,buffer (hi::hemlock-echo-area-buffer ,view)) :echo)
-                         (t (error "invalid buffer ~s for view ~s" ,buffer ,view)))))
-       (hemlock:with-display-context (,view ,pane)
-         ,@body))))
+                         ;(t (error "invalid buffer ~s for view ~s" ,buffer ,view))
+                         (t (warn "invalid buffer ~s for view ~s" ,buffer ,view)
+                            nil)
+                         )))
+       (when ,pane
+         (hemlock:with-display-context (,view ,pane)
+           ,@body)))))
 
 
 (defmacro nsstring-encoding-to-nsinteger (n)
